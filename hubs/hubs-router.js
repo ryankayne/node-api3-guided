@@ -2,8 +2,26 @@ const express = require('express');
 
 const Hubs = require('./hubs-model.js');
 const Messages = require('../messages/messages-model.js');
+const check = require('./checkForMiddleware.js');
 
 const router = express.Router();
+
+function uppercaser(req, res, next) {
+
+  if(typeof req.body.name === 'string') {
+
+    req.body.name = req.body.name.toUpperCase();
+
+    next();
+  
+  } else {
+
+    res.status(400).json({ errorMessage: 'The name should be a string!' })
+
+  }
+}
+
+
 
 // this only runs if the url has /api/hubs in it
 router.get('/', (req, res) => {
@@ -40,7 +58,9 @@ router.get('/:id', (req, res) => {
   });
 });
 
-router.post('/', (req, res) => {
+
+
+router.post('/', checkFor('name'), check('age'), uppercaser, (req, res) => {
   Hubs.add(req.body)
   .then(hub => {
     res.status(201).json(hub);
@@ -72,7 +92,7 @@ router.delete('/:id', (req, res) => {
   });
 });
 
-router.put('/:id', (req, res) => {
+router.put('/:id', uppercaser, (req, res) => {
   Hubs.update(req.params.id, req.body)
   .then(hub => {
     if (hub) {
